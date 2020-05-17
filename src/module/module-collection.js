@@ -96,12 +96,37 @@ const functionAssert = {
   expected: 'function'
 }
 
+/**
+ * actions 的用法两种
+ *
+ * 1. actions: {
+ *      add() {}
+ *    }
+ *
+ * 2. actions: {
+ *      add: {
+ *        handler() {
+ *
+ *        }
+ *      }
+ *    }
+ */
 const objectAssert = {
-  assert: value => typeof value === 'function' ||
-    (typeof value === 'object' && typeof value.handler === 'function'),
+  assert: value => {
+    return typeof value === 'function' ||
+        (typeof value === 'object' && typeof value.handler === 'function')
+  },
   expected: 'function or object with "handler" function'
 }
 
+/**
+ * 对 Store 选项对象中的
+ *  - getters 派生一些状态
+ *  - mutations 状态更新
+ *  - actions 提交 mutation, 包含异步操作
+ *
+ *  因为 getters、mutations 和 actions 都是一个对象
+ */
 const assertTypes = {
   getters: functionAssert,
   mutations: functionAssert,
@@ -109,14 +134,28 @@ const assertTypes = {
 }
 
 function assertRawModule (path, rawModule) {
+  /**
+   * key: assertTypes 中的 key值
+   */
   Object.keys(assertTypes).forEach(key => {
     if (!rawModule[key]) return
 
     const assertOptions = assertTypes[key]
 
+    /**
+     * value - Function
+     * type - String
+     */
     forEachValue(rawModule[key], (value, type) => {
       assert(
         assertOptions.assert(value),
+
+        /**
+           * 如果断言失败, mutations 或 getters 的下 key: value 映射中,
+           * value 不为函数的情况下
+           */
+
+        // 抛出断言失败的消息
         makeAssertionMessage(path, key, type, value, assertOptions.expected)
       )
     })
