@@ -44,13 +44,14 @@ export default class ModuleCollection {
      */
     const newModule = new Module(rawModule, runtime)
 
-    // path 的作用?
+    // path的作用就是如果存在 modules的情况下, path主要存放 modules以及递归modules的子项目和父节点的路径关系
+    // path.lenght === 0 的情况是根模块注册的情况下
     if (path.length === 0) {
       this.root = newModule
     } else {
       debugger
-      // path 有多个的情况下
-      // 为什么只取前两个 path, 要排除最后一个呢?
+      // path 最多有两个值
+      // path 有多个的情况下, 只取第一个, 第一个为父模块的名字, 第二个为子模块的名字
       // 单链表结构
       // parentModule -> ChildModule -> ChildChildModule
       // 组合模式
@@ -75,6 +76,10 @@ export default class ModuleCollection {
     }
   }
 
+  /**
+   * 卸载已注册的模块
+   * @param path
+   */
   unregister (path) {
     const parent = this.get(path.slice(0, -1))
     const key = path[path.length - 1]
@@ -83,6 +88,11 @@ export default class ModuleCollection {
     parent.removeChild(key)
   }
 
+  /**
+   * 根据 path 获取已经注册的模块
+   * @param path
+   * @returns {boolean}
+   */
   isRegistered (path) {
     const parent = this.get(path.slice(0, -1))
     const key = path[path.length - 1]
@@ -91,6 +101,12 @@ export default class ModuleCollection {
   }
 }
 
+/**
+ * 更新已注册的模块
+ * @param path
+ * @param targetModule
+ * @param newModule
+ */
 function update (path, targetModule, newModule) {
   if (__DEV__) {
     assertRawModule(path, newModule)
@@ -99,6 +115,10 @@ function update (path, targetModule, newModule) {
   // update target module
   targetModule.update(newModule)
 
+  /**
+   * 如果你需要更新的模块有子模块, 需要进行递归 + 回归方式的更新
+   * newModule 更新的 modules 是建立在 targetModule 的 modules的基础上
+   */
   // update nested modules
   if (newModule.modules) {
     for (const key in newModule.modules) {
@@ -111,6 +131,11 @@ function update (path, targetModule, newModule) {
         }
         return
       }
+      /**
+       * path
+       * 需要被更新的子模块的 module 实例
+       * 更新为最新的子模块的对象
+       */
       update(
         path.concat(key),
         targetModule.getChild(key),
