@@ -25,22 +25,51 @@ export default class ModuleCollection {
     update([], this.root, rawRootModule)
   }
 
+  /**
+   * 递归函数: 递推和回归的算法进行注册嵌套的模块
+   * @param path
+   * @param rawModule
+   * @param runtime
+   */
   register (path, rawModule, runtime = true) {
+    /**
+     * 开发环境下, 断言原始模块是否符合标准
+     */
     if (__DEV__) {
       assertRawModule(path, rawModule)
     }
 
+    /**
+     * 根据原始模块, 构造出新模块的实例对象
+     */
     const newModule = new Module(rawModule, runtime)
+
+    // path 的作用?
     if (path.length === 0) {
       this.root = newModule
     } else {
+      debugger
+      // path 有多个的情况下
+      // 为什么只取前两个 path, 要排除最后一个呢?
+      // 单链表结构
+      // parentModule -> ChildModule -> ChildChildModule
+      // 组合模式
       const parent = this.get(path.slice(0, -1))
       parent.addChild(path[path.length - 1], newModule)
     }
 
     // register nested modules
+    // 递归注册嵌套模块, 创建一个单链表的数据结构, 一层嵌套一层的关系
+    // _children 就是单链表数据结构的指针, 指向下一个 module的节点
+    // 而且 module 构造器属于一个组合模式
+    // 无需关系创建的 module 是父节点还是子节点, 结构和方法都是一样的
+
+    // 如果原始模块存在 modules 属性, 且这个属性是一个对象
     if (rawModule.modules) {
+      // 和根原始模块一样的结构, 和 Store 构造器的选项对象一样 rawChildModule
       forEachValue(rawModule.modules, (rawChildModule, key) => {
+        // 嵌套的模块的 path 路径为
+        // ['Parent', 'Child1', 'Child1Child']
         this.register(path.concat(key), rawChildModule, runtime)
       })
     }

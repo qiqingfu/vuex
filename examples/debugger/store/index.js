@@ -6,9 +6,25 @@ import Vuex from 'vuex'
 
 Vue.use(Vuex)
 
-export default new Vuex.Store({
+const moduleA = {
+  namespaced: true,
   state: {
-    name: 'zhangsan'
+    moduleName: 'a'
+  }
+}
+
+const moduleB = {
+  namespaced: true,
+  state: {
+    moduleName: 'b'
+  }
+}
+
+export default new Vuex.Store({
+  state () {
+    return {
+      name: 'qiqf'
+    }
   },
   actions: {
     add: {
@@ -16,5 +32,9 @@ export default new Vuex.Store({
         console.log('actions add')
       }
     }
+  },
+  modules: {
+    moduleA,
+    moduleB
   }
 })

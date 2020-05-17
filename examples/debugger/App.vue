@@ -1,12 +1,17 @@
 <template>
   <div>
-    hello
+    hello, {{ name }}
   </div>
 </template>
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+  computed: {
+    name() {
+      return this.$store.state.name;
+    }
+  }
 }
 </script>
 
