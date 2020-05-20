@@ -13,6 +13,11 @@ export default class ModuleCollection {
     }, this.root)
   }
 
+  /**
+   * 获取嵌套结构的命名空间
+   * @param path
+   * @returns {*}
+   */
   getNamespace (path) {
     let module = this.root
     return path.reduce((namespace, key) => {
@@ -49,7 +54,6 @@ export default class ModuleCollection {
     if (path.length === 0) {
       this.root = newModule
     } else {
-      debugger
       // path 最多有两个值
       // path 有多个的情况下, 只取第一个, 第一个为父模块的名字, 第二个为子模块的名字
       // 单链表结构
@@ -161,7 +165,8 @@ const functionAssert = {
  *      add: {
  *        handler() {
  *
- *        }
+ *        },
+ *        root: true | false 用来指定该 action 没有使用命名空间
  *      }
  *    }
  */

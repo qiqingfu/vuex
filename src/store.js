@@ -38,6 +38,12 @@ export class Store {
     this._makeLocalGettersCache = Object.create(null)
 
     // bind commit and dispatch to self
+    /**
+     * 重写原型上的方法
+     * 这样开发中使用时,commit 或 dispatch 是直接调用的, 所以 this指向 undefined(严格模式)或 window对象
+     * 为了让开发者直接调用, 并且 commit 和 dispatch 任然指向 store 这个实例对象
+     * @type {Store}
+     */
     const store = this
     const { dispatch, commit } = this
     this.dispatch = function boundDispatch (type, payload) {
@@ -50,11 +56,20 @@ export class Store {
     // strict mode
     this.strict = strict
 
+    /**
+     * root模块的 state 对象
+     */
     const state = this._modules.root.state
 
     // init root module.
     // this also recursively registers all sub-modules
     // and collects all module getters inside this._wrappedGetters
+    /**
+     * this 当前的 store 实例对象
+     * state 当前 root 模块的 state
+     * path
+     * root 模块(包含所有子模块)
+     */
     installModule(this, state, [], this._modules.root)
 
     // initialize the store vm, which is responsible for the reactivity
@@ -329,23 +344,36 @@ function resetStoreVM (store, state, hot) {
 }
 
 function installModule (store, rootState, path, module, hot) {
+  // 只有初始化根模块时, path 为空数组
   const isRoot = !path.length
+
+  // module_collection 类原型上的方法 getNamespace
   const namespace = store._modules.getNamespace(path)
 
   // register in namespace map
+  // 在命名空间映射中注册
+  // 如果当前模块启用了命名空间
   if (module.namespaced) {
+    // 对重复的命名空间做了处理
     if (store._modulesNamespaceMap[namespace] && __DEV__) {
       console.error(`[vuex] duplicate namespace ${namespace} for the namespaced module ${path.join('/')}`)
     }
+    // 在store对象中缓存命名空间的实例
     store._modulesNamespaceMap[namespace] = module
   }
 
   // set state
   if (!isRoot && !hot) {
+    /**
+     * rootState 原始的数据状态
+     */
     const parentState = getNestedState(rootState, path.slice(0, -1))
+
+    // root state moduleName is undefined
     const moduleName = path[path.length - 1]
     store._withCommit(() => {
       if (__DEV__) {
+        // 同名
         if (moduleName in parentState) {
           console.warn(
             `[vuex] state field "${moduleName}" was overridden by a module with the same name at "${path.join('.')}"`
@@ -356,25 +384,67 @@ function installModule (store, rootState, path, module, hot) {
     })
   }
 
+  /**
+   * 每一个 module 都会创建一个 local
+   */
   const local = module.context = makeLocalContext(store, namespace, path)
 
+  /**
+   * 遍历当前 module 的所有 mutation函数 和 key
+   *
+   * mutation - Function
+   * key - String
+   */
   module.forEachMutation((mutation, key) => {
     const namespacedType = namespace + key
     registerMutation(store, namespacedType, mutation, local)
   })
 
+  /**
+   * 遍历当前 module 的所有 mutations函数和 key
+   * action - Function | Object
+   * key - String
+   */
   module.forEachAction((action, key) => {
     const type = action.root ? key : namespace + key
+    // handler 使用者提供的函数
     const handler = action.handler || action
     registerAction(store, type, handler, local)
   })
 
+  /**
+   * 遍历当前 module 的 所有的 getters函数和key
+   * getters - Function
+   * key - String
+   */
   module.forEachGetter((getter, key) => {
+    // 如果使用命名空间, 则进行整合命名空间和key
     const namespacedType = namespace + key
     registerGetter(store, namespacedType, getter, local)
   })
 
+  /**
+   * 递归注册 module
+   * child - module
+   * key 模块名
+   *
+   * 遍历获取当前 module 下的所有子module
+   */
   module.forEachChild((child, key) => {
+    /**
+     * store - Store的实例对象, 通过 store 可以获取到根节点的 getters和state
+     * rootState - 根module的用户原始的 state 对象
+     * key - 子模块的名字(cart|usr)
+     * child - { state: {count: 1} }
+     * hot - false
+     *
+     * {
+     *   modules: {
+     *     cart: { state: {count: 1} },
+     *     user: {}
+     *   }
+     * }
+     */
     installModule(store, rootState, path.concat(key), child, hot)
   })
 }
@@ -382,10 +452,23 @@ function installModule (store, rootState, path, module, hot) {
 /**
  * make localized dispatch, commit, getters and state
  * if there is no namespace, just use root ones
+ * 进行本地化的调度，提交，获取器和状态。如果没有名称空间，请使用根名称空间
+ *
+ * store - 当前的 store 实例对象
+ * namespace - 当前模块是否启用命名空间
+ * path
  */
 function makeLocalContext (store, namespace, path) {
+  // noNamespace 如果没有启用命名空间, 则为 true
   const noNamespace = namespace === ''
 
+  /**
+   * 本地的提交和派发
+   *
+   * store.dispatch
+   * store.commit
+   * 就是在 Store 构造函数中被重写的函数
+   */
   const local = {
     dispatch: noNamespace ? store.dispatch : (_type, _payload, _options) => {
       const args = unifyObjectStyle(_type, _payload, _options)
@@ -422,6 +505,9 @@ function makeLocalContext (store, namespace, path) {
 
   // getters and state object must be gotten lazily
   // because they will be changed by vm update
+  // getter和state对象必须延迟获取，因为它们会被vm update更改
+  // 给 local 对象新增了 getters 和 state 属性
+  // 并且, 在这两个属性取值的时候进行了 拦截处理
   Object.defineProperties(local, {
     getters: {
       get: noNamespace
@@ -432,6 +518,15 @@ function makeLocalContext (store, namespace, path) {
       get: () => getNestedState(store.state, path)
     }
   })
+
+  /**
+   * local 对象有如下属性
+   *
+   * commit
+   * dispatch
+   * getters
+   * state
+   */
 
   return local
 }
@@ -461,16 +556,67 @@ function makeLocalGetters (store, namespace) {
   return store._makeLocalGettersCache[namespace]
 }
 
+/**
+ * 注册 mutations
+ * @param store  Store 的实例对象
+ * @param type   处理了使用命名空间情况的 key
+ * @param handler mutations中的函数,使用者提供的
+ * @param local 本地的调度对象, 其中包括commit、dispatch、getters、state
+ */
 function registerMutation (store, type, handler, local) {
+  // 在 _mutations中每一个 key 都对应一个数组
   const entry = store._mutations[type] || (store._mutations[type] = [])
+  // 注册 mutations
+  // 闭包环境
+  /**
+   * _mutations: {
+   *   key: [fn, fn, fn]
+   * }
+   */
   entry.push(function wrappedMutationHandler (payload) {
+    /**
+     * 在用户提供的 mutations 中的函数
+     * mutations: {
+     *   change: function (state, payload) {
+     *     state = local.state
+     *     this = store
+     *   }
+     * }
+     */
     handler.call(store, local.state, payload)
   })
 }
 
+/**
+ * 注册 actions
+ * @param store Store 构造器实例
+ * @param type  提交的类型
+ * @param handler 提交的函数
+ * @param local 本地的调度对象, 其中包括commit、dispatch、getters、state
+ */
 function registerAction (store, type, handler, local) {
   const entry = store._actions[type] || (store._actions[type] = [])
+  /**
+   * 包装的动作处理程序
+   * actions: {
+   *   add: {
+   *     handler({ dispatch, commit, getters, state, rootGetters, rootState }, payload) {
+   *        return new Promise((resolve, reject) => {
+   *        // 异步请求
+   *          ajax()
+   *            .then((result) => {
+   *               提交 mutations
+   *               commit()
+   *               resolve(result)
+   *            })
+   *            .catch(err => reject(err))
+   *        })
+   *     }
+   *   }
+   * }
+   */
   entry.push(function wrappedActionHandler (payload) {
+    // actions 中使用者返回的 Promise 对象
     let res = handler.call(store, {
       dispatch: local.dispatch,
       commit: local.commit,
@@ -479,9 +625,17 @@ function registerAction (store, type, handler, local) {
       rootGetters: store.getters,
       rootState: store.state
     }, payload)
+
+    /**
+     * 如果 actions 中的 handler 返回的不是一个 Promise, 则会被包装成一个 Promise
+     */
     if (!isPromise(res)) {
       res = Promise.resolve(res)
     }
+    /**
+     * store._devtollHook是什么意思?
+     * 是时光旅行的调试工具提供的钩子吗?
+     */
     if (store._devtoolHook) {
       return res.catch(err => {
         store._devtoolHook.emit('vuex:error', err)
@@ -493,7 +647,15 @@ function registerAction (store, type, handler, local) {
   })
 }
 
+/**
+ *
+ * @param store Store 构造器实例对向
+ * @param type 派生的名字
+ * @param rawGetter 派生的 handler, 如果Vue中 computed中的函数
+ * @param local 本地的调度对象, 其中包括commit、dispatch、getters、state
+ */
 function registerGetter (store, type, rawGetter, local) {
+  // 一个 module 中不可以重复定义 getters
   if (store._wrappedGetters[type]) {
     if (__DEV__) {
       console.error(`[vuex] duplicate getter key: ${type}`)
@@ -501,6 +663,26 @@ function registerGetter (store, type, rawGetter, local) {
     return
   }
   store._wrappedGetters[type] = function wrappedGetter (store) {
+    /**
+     * 返回 rawGetter的计算结果
+     *
+     * getters: {
+     *   count(state, getters, rootState, rootGetters) {
+     *     return state.todos.filter(todo => todo.achieve)
+     *   }
+     * }
+     *
+     * 也可以返回一个函数
+     * getters: {
+     *   count(state, getters, rootState, rootGetters) {
+     *     return function (status) {
+     *       // TODO
+     *     }
+     *   }
+     * }
+     */
+
+    // 返回使用者的计算结果或者是一个函数
     return rawGetter(
       local.state, // local state
       local.getters, // local getters

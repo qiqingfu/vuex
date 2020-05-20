@@ -5,6 +5,9 @@ import { forEachValue } from '../util'
  * 单链表数据结构的节点
  *
  * _children 就是一个指针
+ *
+ * 后续被赋值一个 context 属性, 其中包括 commit、dispatch、getters、state
+ * 并且对当前模块是否为 namespaced 做了处理
  */
 export default class Module {
   constructor (rawModule, runtime) {

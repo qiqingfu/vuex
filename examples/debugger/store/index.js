@@ -6,17 +6,17 @@ import Vuex from 'vuex'
 
 Vue.use(Vuex)
 
-const moduleA = {
+const cart = {
   namespaced: true,
   state: {
-    moduleName: 'a'
+    count: 1
   }
 }
 
-const moduleB = {
+const user = {
   namespaced: true,
   state: {
-    moduleName: 'b'
+    userInfo: {}
   }
 }
 
@@ -26,15 +26,19 @@ export default new Vuex.Store({
       name: 'qiqf'
     }
   },
+  mutations: {
+    plus () {}
+  },
   actions: {
     add: {
       handler () {
         console.log('actions add')
-      }
+      },
+      root: true
     }
   },
   modules: {
-    moduleA,
-    moduleB
+    cart,
+    user
   }
 })
