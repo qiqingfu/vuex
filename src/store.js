@@ -343,6 +343,14 @@ function resetStoreVM (store, state, hot) {
   }
 }
 
+/**
+ *
+ * @param store Store 实例对象
+ * @param rootState 模块的原始数据
+ * @param path      命名空间路径
+ * @param module    每一个嵌套模块, (从 root 开始)
+ * @param hot
+ */
 function installModule (store, rootState, path, module, hot) {
   // 只有初始化根模块时, path 为空数组
   const isRoot = !path.length
@@ -515,6 +523,7 @@ function makeLocalContext (store, namespace, path) {
         : () => makeLocalGetters(store, namespace)
     },
     state: {
+      // 获取对应命名空间下的 state 数据
       get: () => getNestedState(store.state, path)
     }
   })
@@ -559,7 +568,7 @@ function makeLocalGetters (store, namespace) {
 /**
  * 注册 mutations
  * @param store  Store 的实例对象
- * @param type   处理了使用命名空间情况的 key
+ * @param type   处理了使用命名空间情况的 key `cart/count`
  * @param handler mutations中的函数,使用者提供的
  * @param local 本地的调度对象, 其中包括commit、dispatch、getters、state
  */
@@ -617,6 +626,7 @@ function registerAction (store, type, handler, local) {
    */
   entry.push(function wrappedActionHandler (payload) {
     // actions 中使用者返回的 Promise 对象
+    // 给包装了一层
     let res = handler.call(store, {
       dispatch: local.dispatch,
       commit: local.commit,
