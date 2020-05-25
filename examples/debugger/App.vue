@@ -11,6 +11,9 @@ export default {
     name() {
       return this.$store.state.name;
     }
+  },
+  mounted() {
+    console.log(this.$store);
   }
 }
 </script>

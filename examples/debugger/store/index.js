@@ -30,11 +30,13 @@ export default new Vuex.Store({
     plus () {}
   },
   actions: {
-    add: {
-      handler () {
-        console.log('actions add')
-      },
-      root: true
+    add (store) {
+      console.log('add')
+    }
+  },
+  getters: {
+    count (state) {
+      console.log('getters count')
     }
   },
   modules: {

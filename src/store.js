@@ -74,21 +74,42 @@ export class Store {
 
     // initialize the store vm, which is responsible for the reactivity
     // (also registers _wrappedGetters as computed properties)
+    // 初始化负责响应性的存储虚拟机
+    // 将 _wrappedGetters 注册为计算属性
+    /**
+     * this - Store 构造器实例
+     * state - 模块的 state 原始数据属性
+     */
     resetStoreVM(this, state)
 
     // apply plugins
     plugins.forEach(plugin => plugin(this))
 
     const useDevtools = options.devtools !== undefined ? options.devtools : Vue.config.devtools
+    /**
+     * 开启时光旅行
+     */
     if (useDevtools) {
       devtoolPlugin(this)
     }
   }
 
+  /**
+   * 属性描述符:
+   *  - 数据描述符
+   *  - 存取描述符
+   *
+   *  存取描述符
+   *  getter 函数 和 setter 函数所描述的属性
+   */
   get state () {
     return this._vm._data.$$state
   }
 
+  /**
+   * 禁止直接修改 state 对象
+   * @param v
+   */
   set state (v) {
     if (__DEV__) {
       assert(false, `use store.replaceState() to explicit replace store state.`)
@@ -193,10 +214,21 @@ export class Store {
     })
   }
 
+  /**
+   * 订阅 store 的 mutation
+   * fn 会在每个 mutation 完成后调用, 接受 mutation 和 经过 mutation 后的状态作为参数
+   * @param fn
+   * @param options
+   */
   subscribe (fn, options) {
     return genericSubscribe(fn, this._subscribers, options)
   }
 
+  /**
+   * 订阅 store 的action。fn 会在每个 action 分发的时候调用并接受 action 描述和当前的 store的state
+   * @param fn
+   * @param options
+   */
   subscribeAction (fn, options) {
     const subs = typeof fn === 'function' ? { before: fn } : fn
     return genericSubscribe(subs, this._actionSubscribers, options)
@@ -209,6 +241,10 @@ export class Store {
     return this._watcherVM.$watch(() => getter(this.state, this.getters), cb, options)
   }
 
+  /**
+   * 替换 store 的根状态, 仅用于状态合并或时光旅行调试
+   * @param state
+   */
   replaceState (state) {
     this._withCommit(() => {
       this._vm._data.$$state = state
@@ -306,7 +342,20 @@ function resetStoreVM (store, state, hot) {
     // use computed to leverage its lazy-caching mechanism
     // direct inline function use will lead to closure preserving oldVm.
     // using partial to return function with only arguments preserved in closure environment.
+    // 使用计算来利用其延迟缓存机制
+    // 直接内联函数的使用将导致关闭保留 oldVm
+    // 使用局部返回函数, 仅保留在闭包环境中保留的参数
+    /**
+     * function (fn, store) {
+     *   return function () {
+     *     return fn(store)
+     *   }
+     * }
+     */
     computed[key] = partial(fn, store)
+    /**
+     * 对 store 实例的 getters 属性设置拦截
+     */
     Object.defineProperty(store.getters, key, {
       get: () => store._vm[key],
       enumerable: true // for local getters
@@ -317,7 +366,15 @@ function resetStoreVM (store, state, hot) {
   // suppress warnings just in case the user has added
   // some funky global mixins
   const silent = Vue.config.silent
+  // 取消 Vue 所有的日志与警告
   Vue.config.silent = true
+  /**
+   * store 的实例上挂载一个 _vm 实例对象
+   * 将 state 作为响应式的数据
+   * 并且通过别的对象属性 getters 函数来读取
+   *
+   * 将 state 中的 getters 函数包装成 vue 的 computed 计算属性
+   */
   store._vm = new Vue({
     data: {
       $$state: state
@@ -327,10 +384,16 @@ function resetStoreVM (store, state, hot) {
   Vue.config.silent = silent
 
   // enable strict mode for new vm
+  // 如果开启了严格模式
+  // 严格模式下, 无论何时发生状态变更且不是由 mutation 函数引起的, 将会抛出错误。
+  // 这能保证所有的状态变更都能被调试工具跟踪到
   if (store.strict) {
     enableStrictMode(store)
   }
 
+  /**
+   * 这块什么意思, 不太明白
+   */
   if (oldVm) {
     if (hot) {
       // dispatch changes in all subscribed watchers
@@ -702,6 +765,13 @@ function registerGetter (store, type, rawGetter, local) {
   }
 }
 
+/**
+ * _committing 的作用
+ * 在 mutations 之前将 _committing 设置为 true
+ * mutations 之后将 _committing 设置为 false
+ * 在严格模式下, 如果被观测的 state 状态直接被修改和赋值, 那么 _committing 为 false, 就会抛出警告
+ * @param store
+ */
 function enableStrictMode (store) {
   store._vm.$watch(function () { return this._data.$$state }, () => {
     if (__DEV__) {
