@@ -390,6 +390,8 @@ function resetStoreVM (store, state, hot) {
     computed[key] = partial(fn, store)
     /**
      * 对 store 实例的 getters 属性设置拦截
+     *
+     * 通过 rootGetters['user/count'] 读取 user module 下 getters计算函数的count值
      */
     Object.defineProperty(store.getters, key, {
       get: () => store._vm[key],
@@ -409,6 +411,17 @@ function resetStoreVM (store, state, hot) {
    * 并且通过别的对象属性 getters 函数来读取
    *
    * 将 state 中的 getters 函数包装成 vue 的 computed 计算属性
+   *
+   * {
+   *   data: {
+   *     $$state: {
+   *       name: "zs",
+   *       "user": {
+   *         n: 1
+   *       }
+   *     }
+   *   }
+   * }
    */
   store._vm = new Vue({
     data: {
@@ -473,6 +486,7 @@ function installModule (store, rootState, path, module, hot) {
   if (!isRoot && !hot) {
     /**
      * rootState 原始的数据状态
+     * 获取嵌套状态
      */
     const parentState = getNestedState(rootState, path.slice(0, -1))
 
@@ -567,6 +581,7 @@ function installModule (store, rootState, path, module, hot) {
  */
 function makeLocalContext (store, namespace, path) {
   // noNamespace 如果没有启用命名空间, 则为 true
+  // 或者为 root 模块
   const noNamespace = namespace === ''
 
   /**
@@ -615,6 +630,7 @@ function makeLocalContext (store, namespace, path) {
   // getter和state对象必须延迟获取，因为它们会被vm update更改
   // 给 local 对象新增了 getters 和 state 属性
   // 并且, 在这两个属性取值的时候进行了 拦截处理
+  // 属性描述符
   Object.defineProperties(local, {
     getters: {
       get: noNamespace
@@ -816,6 +832,12 @@ function enableStrictMode (store) {
   }, { deep: true, sync: true })
 }
 
+/**
+ * 获取嵌套状态
+ * @param state 根(root) 的 state
+ * @param path  嵌套状态模块的路径
+ * @returns {*}
+ */
 function getNestedState (state, path) {
   return path.reduce((state, key) => state[key], state)
 }
