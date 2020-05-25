@@ -251,6 +251,12 @@ export class Store {
     })
   }
 
+  /**
+   * 模块动态注册
+   * @param path
+   * @param rawModule
+   * @param options
+   */
   registerModule (path, rawModule, options = {}) {
     if (typeof path === 'string') path = [path]
 
@@ -259,12 +265,19 @@ export class Store {
       assert(path.length > 0, 'cannot register the root module by using registerModule.')
     }
 
+    /**
+     * 注册嵌套 modules, 建立父子模块之间的关系
+     */
     this._modules.register(path, rawModule)
     installModule(this, this.state, path, this._modules.get(path), options.preserveState)
     // reset store to update getters...
     resetStoreVM(this, this.state)
   }
 
+  /**
+   * 动态卸载模块
+   * @param path
+   */
   unregisterModule (path) {
     if (typeof path === 'string') path = [path]
 
@@ -280,6 +293,11 @@ export class Store {
     resetStore(this)
   }
 
+  /**
+   * 检查该模块的名字是否已注册
+   * @param path - String | Array<string>
+   * @return {boolean}
+   */
   hasModule (path) {
     if (typeof path === 'string') path = [path]
 
@@ -290,11 +308,22 @@ export class Store {
     return this._modules.isRegistered(path)
   }
 
+  /**
+   * 热更新替换 mutation 和 action
+   * @param newOptions
+   */
   hotUpdate (newOptions) {
     this._modules.update(newOptions)
     resetStore(this, true)
   }
 
+  /**
+   * 关于 commit 提交的一个操作的切片
+   * 在修改 state 之前, 将 _committing 设置为 true
+   * 修改 state 之后, 将 _committing 设置为 false
+   * @param fn
+   * @private
+   */
   _withCommit (fn) {
     const committing = this._committing
     this._committing = true
@@ -392,7 +421,7 @@ function resetStoreVM (store, state, hot) {
   }
 
   /**
-   * 这块什么意思, 不太明白
+   * 如果 oldVm实例存在, 并且动态模块注册时, 将 preserveState 设置为 true
    */
   if (oldVm) {
     if (hot) {
@@ -412,7 +441,8 @@ function resetStoreVM (store, state, hot) {
  * @param rootState 模块的原始数据
  * @param path      命名空间路径
  * @param module    每一个嵌套模块, (从 root 开始)
- * @param hot
+ * @param hot  动态注册模块时, preserveState 选项的值, 为 true 时, 该模块会被注册
+ *             action、mutation、getter 会被添加到 store 中, 但 state 不会
  */
 function installModule (store, rootState, path, module, hot) {
   // 只有初始化根模块时, path 为空数组
