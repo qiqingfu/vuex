@@ -116,6 +116,12 @@ export class Store {
     }
   }
 
+  /**
+   * 提交 mutation
+   * @param _type
+   * @param _payload
+   * @param _options
+   */
   commit (_type, _payload, _options) {
     // check object-style commit
     const {
@@ -814,6 +820,13 @@ function getNestedState (state, path) {
   return path.reduce((state, key) => state[key], state)
 }
 
+/**
+ * 统一对象样式
+ * @param type
+ * @param payload
+ * @param options
+ * @return {{payload: ({type}|*), options: *, type: *}}
+ */
 function unifyObjectStyle (type, payload, options) {
   if (isObject(type) && type.type) {
     options = payload
