@@ -6,41 +6,51 @@ import Vuex from 'vuex'
 
 Vue.use(Vuex)
 
-const cart = {
-  namespaced: true,
-  state: {
-    count: 1
-  }
-}
-
 const user = {
   namespaced: true,
   state: {
-    userInfo: {}
+    age: 22,
+    sex: '男',
+    links: ['写代码', '读书', '看电影']
+  },
+  mutations: {
+    ageAdd (state, payload) {
+      state.age = state.age + payload
+    }
+  },
+  actions: {
+    setAge ({ commit }, payload) {
+      commit('ageAdd', 1, { root: true })
+    }
   }
 }
 
 export default new Vuex.Store({
   state () {
     return {
-      name: 'qiqf'
+      name: '',
+      age: 0
     }
   },
   mutations: {
-    plus () {}
-  },
-  actions: {
-    add (store) {
-      console.log('add')
+    setName (state, payload) {
+      state.name = payload
+    },
+    ageAdd (state, payload) {
+      state.age = state.age + payload
     }
   },
-  getters: {
-    count (state) {
-      console.log('getters count')
+  actions: {
+    getName ({ commit }, payload) {
+      return new Promise((resolve, reject) => {
+        setTimeout(() => {
+          commit('setName', 'qiYANG')
+          resolve()
+        }, 2000)
+      })
     }
   },
   modules: {
-    cart,
     user
   }
 })

@@ -175,6 +175,10 @@ export class Store {
       return
     }
 
+    /**
+     * _actionSubscribers 里面存放的是什么东西?
+     * 在 action 异步请求之前调用 before钩子
+     */
     try {
       this._actionSubscribers
         .slice() // shallow copy to prevent iterator invalidation if subscriber synchronously calls unsubscribe
@@ -193,6 +197,10 @@ export class Store {
 
     return new Promise((resolve, reject) => {
       result.then(res => {
+        /**
+         * 在 action 异步请求结果响应之后, 调用after钩子
+         * 难道是为了时光旅行记录吗?
+         */
         try {
           this._actionSubscribers
             .filter(sub => sub.after)
@@ -205,6 +213,9 @@ export class Store {
         }
         resolve(res)
       }, error => {
+        /**
+         * 异步请求出错调用对应的 _actionSubscribers 对应的 error 钩子
+         */
         try {
           this._actionSubscribers
             .filter(sub => sub.error)
@@ -582,6 +593,7 @@ function installModule (store, rootState, path, module, hot) {
 function makeLocalContext (store, namespace, path) {
   // noNamespace 如果没有启用命名空间, 则为 true
   // 或者为 root 模块
+  // 保存在闭包环境中的命名空间
   const noNamespace = namespace === ''
 
   /**
@@ -616,6 +628,9 @@ function makeLocalContext (store, namespace, path) {
      *     }
      *   }
      * }
+     *
+     * noNamespace 为 false的时候, 则为 module 模块下的 action 异步请求之后
+     * 通过调用当前 module._context 的 commit 方法
      */
     commit: noNamespace ? store.commit : (_type, _payload, _options) => {
       const args = unifyObjectStyle(_type, _payload, _options)
