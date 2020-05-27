@@ -608,6 +608,15 @@ function makeLocalContext (store, namespace, path) {
       return store.dispatch(type, payload)
     },
 
+    /**
+     * {
+     *   actions: {
+     *     getUser({ commit }, payLoad) {
+     *       commit(命名空间模块下的 mutations 对应的函数, payload)
+     *     }
+     *   }
+     * }
+     */
     commit: noNamespace ? store.commit : (_type, _payload, _options) => {
       const args = unifyObjectStyle(_type, _payload, _options)
       const { payload, options } = args
