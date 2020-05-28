@@ -1,10 +1,17 @@
 import { isObject } from './util'
 
 /**
+ * 辅助函数, 帮助生成计算属性, 方面在 vue 文件中访问 state 状态数据
  * Reduce the code which written in Vue.js for getting the state.
  * @param {String} [namespace] - Module's namespace
  * @param {Object|Array} states # Object's item can be a function which accept state and getters for param, you can do something for state and getters in it.
  * @param {Object}
+ *
+ * {
+ *   key: function,
+ *   key1: function,
+ *   key2: function
+ * }
  */
 export const mapState = normalizeNamespace((namespace, states) => {
   const res = {}
@@ -23,6 +30,17 @@ export const mapState = normalizeNamespace((namespace, states) => {
         state = module.context.state
         getters = module.context.getters
       }
+      /**
+       * mapState('user', {
+       *   "name": function (state, getters) {
+       *     this -> vm
+       *   }
+       * })
+       *
+       * mapState('user', {
+       *   "name": "name"
+       * })
+       */
       return typeof val === 'function'
         ? val.call(this, state, getters)
         : state[val]
@@ -136,6 +154,11 @@ export const createNamespacedHelpers = (namespace) => ({
 })
 
 /**
+ * 归一化map
+ * 此时的 map结构可能是
+ *  - {key - val}
+ *  - {key - function}
+ *  - [key, key, key]
  * Normalize the map
  * normalizeMap([1, 2, 3]) => [ { key: 1, val: 1 }, { key: 2, val: 2 }, { key: 3, val: 3 } ]
  * normalizeMap({a: 1, b: 2, c: 3}) => [ { key: 'a', val: 1 }, { key: 'b', val: 2 }, { key: 'c', val: 3 } ]
@@ -164,13 +187,23 @@ function isValidMap (map) {
  * Return a function expect two param contains namespace and map. it will normalize the namespace and then the param's function will handle the new namespace and the map.
  * @param {Function} fn
  * @return {Function}
+ * 标准化命名空间
+ * 期望两个参数, 包含m命名空间和映射
  */
 function normalizeNamespace (fn) {
+  /**
+   * computed: {
+   *   ...mapState('user', {
+   *     xxx: xxx
+   *   })
+   * }
+   */
   return (namespace, map) => {
     if (typeof namespace !== 'string') {
       map = namespace
       namespace = ''
     } else if (namespace.charAt(namespace.length - 1) !== '/') {
+      // 如果使用命名空间, user, 默认给 user 追加 / => user/
       namespace += '/'
     }
     return fn(namespace, map)
@@ -183,6 +216,9 @@ function normalizeNamespace (fn) {
  * @param {String} helper
  * @param {String} namespace
  * @return {Object}
+ *
+ * 如果你要使用命名空间, 必须要创建命名空间模块, 这样 vuex 会在初始化时给进行注册
+ * 如果使用命名空间, 且命名空间没有注册, 则抛出警告
  */
 function getModuleByNamespace (store, helper, namespace) {
   const module = store._modulesNamespaceMap[namespace]
