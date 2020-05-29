@@ -518,6 +518,7 @@ function installModule (store, rootState, path, module, hot) {
 
   /**
    * 每一个 module 都会创建一个 local
+   * 会被保存在闭包环境中
    */
   const local = module.context = makeLocalContext(store, namespace, path)
 
@@ -609,6 +610,10 @@ function makeLocalContext (store, namespace, path) {
       const { payload, options } = args
       let { type } = args
 
+      /**
+       * 如果没有使用 options 或者 root 不为 true
+       * 将 type 和当前模块的空间命名进行拼接, 调用对应命名空间下的 action
+       */
       if (!options || !options.root) {
         type = namespace + type
         if (__DEV__ && !store._actions[type]) {

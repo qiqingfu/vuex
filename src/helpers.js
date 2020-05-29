@@ -20,8 +20,15 @@ export const mapState = normalizeNamespace((namespace, states) => {
   }
   normalizeMap(states).forEach(({ key, val }) => {
     res[key] = function mappedState () {
+      /**
+       * 拿到 state 的实例对象, 方便后续操作
+       */
       let state = this.$store.state
       let getters = this.$store.getters
+      /**
+       * 如果使用了命名空间, 确保对应命名空间的模块已经注册
+       * 并拿到对应命名的 state 和 getters
+       */
       if (namespace) {
         const module = getModuleByNamespace(this.$store, 'mapState', namespace)
         if (!module) {
@@ -40,6 +47,10 @@ export const mapState = normalizeNamespace((namespace, states) => {
        * mapState('user', {
        *   "name": "name"
        * })
+       */
+      /**
+       * map 映射的 val 如果是一个函数, 将 state 状态传递给用户自己决定使用什么数据
+       * 如果是一个字符串, 则取对应 state 的值
        */
       return typeof val === 'function'
         ? val.call(this, state, getters)
@@ -73,6 +84,16 @@ export const mapMutations = normalizeNamespace((namespace, mutations) => {
         }
         commit = module.context.commit
       }
+      /**
+       * 如果 mapMutations 的 map映射的 val 是函数
+       * {
+       *   ...mapMutations({
+       *     xxx: function (commit) {
+       *       // 手动 commit
+       *     }
+       *   })
+       * }
+       */
       return typeof val === 'function'
         ? val.apply(this, [commit].concat(args))
         : commit.apply(this.$store, [val].concat(args))
@@ -116,6 +137,8 @@ export const mapGetters = normalizeNamespace((namespace, getters) => {
  * @param {String} [namespace] - Module's namespace
  * @param {Object|Array} actions # Object's item can be a function which accept `dispatch` function as the first param, it can accept anthor params. You can dispatch action and do any other things in this function. specially, You need to pass anthor params from the mapped function.
  * @return {Object}
+ *
+ * 减少用 vue.js 编写的用于分派[dispatch]动作的代码
  */
 export const mapActions = normalizeNamespace((namespace, actions) => {
   const res = {}
@@ -123,9 +146,22 @@ export const mapActions = normalizeNamespace((namespace, actions) => {
     console.error('[vuex] mapActions: mapper parameter must be either an Array or an Object')
   }
   normalizeMap(actions).forEach(({ key, val }) => {
+    /**
+     * 可以接收参数
+     * @param args
+     * @returns {*}
+     *
+     * key 是函数名
+     */
     res[key] = function mappedAction (...args) {
       // get dispatch function from store
+      // 从 store 获取调度功能
       let dispatch = this.$store.dispatch
+
+      /**
+       * 如果使用了命名空间, 则判断对应命名模块是否已经注册
+       * 并且取出对应命名空间下的 makeLocalContext 的 dispatch
+       */
       if (namespace) {
         const module = getModuleByNamespace(this.$store, 'mapActions', namespace)
         if (!module) {
@@ -133,6 +169,18 @@ export const mapActions = normalizeNamespace((namespace, actions) => {
         }
         dispatch = module.context.dispatch
       }
+      /**
+       * 此时的 this 指向的当前单文件的 vm 实例对象
+       * 如果 val 是函数, dispatch 函数作为 val 的第一个参数
+       *
+       * val 如果不是函数, 则为 dispatch 对应的 key
+       * 调用自身模块下的 dispatch
+       * ...mapActions({
+       *   clickHandle: function (dispatch) {
+       *     dispatch('getName')
+       *   }
+       * }),
+       */
       return typeof val === 'function'
         ? val.apply(this, [dispatch].concat(args))
         : dispatch.apply(this.$store, [val].concat(args))
@@ -145,6 +193,9 @@ export const mapActions = normalizeNamespace((namespace, actions) => {
  * Rebinding namespace param for mapXXX function in special scoped, and return them by simple object
  * @param {String} namespace
  * @return {Object}
+ * 在特殊范围内, 为mapXXX 重新绑定命名空间参数,并通过简单对象返回它们
+ * 函数颗粒化
+ * 一个函数接受两个参数, 这两个参数的传递通过调用两次函数, 将参数单个传递
  */
 export const createNamespacedHelpers = (namespace) => ({
   mapState: mapState.bind(null, namespace),

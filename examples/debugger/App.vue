@@ -2,31 +2,35 @@
   <div>
     <button @click="clickHandle">获取名字</button>
     <button @click="add">增加一岁</button>
-    hello, 我的名字是 {{ userName }}, 我今年[user]下的 age {{ age }}
+    hello, 我的名字是 {{ name }}, 我今年[user]下的 age {{ userAge }}
     <div>
-      我今年 [root] 模块下的 age {{ $store.state.age }}
+      我今年 [root] 模块下的 age {{ rootAge }}
     </div>
   </div>
 </template>
 
 <script>
+import { mapState, mapActions } from 'vuex'
 export default {
   name: 'App',
   computed: {
-    userName () {
-      return this.$store.state.name
-    },
-    age () {
-      return this.$store.state.user.age
-    }
+    ...mapState({
+      'name': 'name',
+      'rootAge': 'age'
+    }),
+    ...mapState('user/', {
+      'userAge': 'age'
+    })
   },
   methods: {
-    clickHandle () {
-      this.$store.dispatch('getName')
-    },
-    add () {
-      this.$store.dispatch(`user/setAge`)
-    }
+    ...mapActions({
+      clickHandle: function (dispatch) {
+        dispatch('getName')
+      }
+    }),
+    ...mapActions('user/', {
+      add: 'setAge'
+    })
   },
   mounted () {
     console.log(this.$store)
