@@ -22,6 +22,14 @@ const user = {
     setAge ({ commit }, payload) {
       commit('ageAdd', 1, { root: true })
     }
+  },
+  getters: {
+    reverseLinks (state, getters) {
+      return state.links.reverse()
+    },
+    agePlus (state) {
+      return state.age + 1
+    }
   }
 }
 

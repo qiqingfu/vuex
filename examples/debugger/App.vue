@@ -6,6 +6,9 @@
     <div>
       我今年 [root] 模块下的 age {{ rootAge }}
     </div>
+    <ul>
+      <li v-for="(item, index) in links" :key="index">{{ item }}</li>
+    </ul>
   </div>
 </template>
 
@@ -20,7 +23,10 @@ export default {
     }),
     ...mapState('user/', {
       'userAge': 'age'
-    })
+    }),
+    links () {
+      return this.$store.getters['user/reverseLinks']
+    }
   },
   methods: {
     ...mapActions({

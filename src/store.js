@@ -381,7 +381,9 @@ function resetStoreVM (store, state, hot) {
   // bind store public getters
   store.getters = {}
   // reset local getters cache
+  // 重置本地 getters 缓存
   store._makeLocalGettersCache = Object.create(null)
+  // wrappedGetters 注册的 getters 函数
   const wrappedGetters = store._wrappedGetters
   const computed = {}
   forEachValue(wrappedGetters, (fn, key) => {
@@ -512,6 +514,15 @@ function installModule (store, rootState, path, module, hot) {
           )
         }
       }
+      /**
+       * {
+       *   state: {
+       *     user: {
+       *       name: "zs"
+       *     }
+       *   }
+       * }
+       */
       Vue.set(parentState, moduleName, module.state)
     })
   }
@@ -660,6 +671,10 @@ function makeLocalContext (store, namespace, path) {
   // 给 local 对象新增了 getters 和 state 属性
   // 并且, 在这两个属性取值的时候进行了 拦截处理
   // 属性描述符
+  /**
+   * 如果是一个命名空间, 访问 getters => makeLocalGetters 返回的一个对象
+   * 如果不是一个命名空间, getters 直接访问的是 root 下的 getters
+   */
   Object.defineProperties(local, {
     getters: {
       get: noNamespace
@@ -695,6 +710,28 @@ function makeLocalContext (store, namespace, path) {
  */
 function makeLocalGetters (store, namespace) {
   if (!store._makeLocalGettersCache[namespace]) {
+    /**
+     * gettersProxy getters 的代理对象
+     * 主要用于 getters 之间互相调用
+     *
+     * {
+     *   getters: {
+          reverseLinks (state, getters) {
+
+            getters = {
+            reverseLinks: 结果
+            agePlus: 结果
+            }
+
+            return state.links.reverse()
+          },
+          agePlus (state) {
+            return state.age + 1
+          }
+        }
+     * }
+     * @type {{}}
+     */
     const gettersProxy = {}
     const splitPos = namespace.length
     Object.keys(store.getters).forEach(type => {

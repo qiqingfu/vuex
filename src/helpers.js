@@ -117,9 +117,13 @@ export const mapGetters = normalizeNamespace((namespace, getters) => {
     // The namespace has been mutated by normalizeNamespace
     val = namespace + val
     res[key] = function mappedGetter () {
+      // 确保 namespace 模块已经注册了
       if (namespace && !getModuleByNamespace(this.$store, 'mapGetters', namespace)) {
         return
       }
+      /**
+       * 如果获取的 getters 不存在, 则抛出错误
+       */
       if (__DEV__ && !(val in this.$store.getters)) {
         console.error(`[vuex] unknown getter: ${val}`)
         return
