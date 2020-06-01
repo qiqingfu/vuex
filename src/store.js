@@ -588,7 +588,7 @@ function installModule (store, rootState, path, module, hot) {
  * 进行本地化的调度，提交，获取器和状态。如果没有名称空间，请使用根名称空间
  *
  * store - 当前的 store 实例对象
- * namespace - 当前模块是否启用命名空间
+ * namespace - 当前模块是否启用命名空间  'user/'
  * path
  */
 function makeLocalContext (store, namespace, path) {
@@ -684,12 +684,22 @@ function makeLocalContext (store, namespace, path) {
   return local
 }
 
+/**
+ *
+ * @param {Object} store
+ * @param {String} namespace
+ * 获取本地的 getters 计算值
+ * 使本地的 getters 缓存
+ *
+ * store.getters 什么时候初始化的值
+ */
 function makeLocalGetters (store, namespace) {
   if (!store._makeLocalGettersCache[namespace]) {
     const gettersProxy = {}
     const splitPos = namespace.length
     Object.keys(store.getters).forEach(type => {
       // skip if the target getter is not match this namespace
+      // 如果目标获取器与此空间名称不匹配, 则跳过
       if (type.slice(0, splitPos) !== namespace) return
 
       // extract local getter type
