@@ -407,7 +407,7 @@ function resetStoreVM (store, state, hot) {
      * 通过 rootGetters['user/count'] 读取 user module 下 getters计算函数的count值
      */
     Object.defineProperty(store.getters, key, {
-      get: () => store._vm[key],
+      get: () => store._vm[key], // 获取的是一个函数
       enumerable: true // for local getters
     })
   })

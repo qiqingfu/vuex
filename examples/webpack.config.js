@@ -51,12 +51,18 @@ module.exports = {
 
   plugins: [
     new VueLoaderPlugin(),
+    // 启动模块热更新替换
+    // https://www.webpackjs.com/plugins/extract-text-webpack-plugin/
     new webpack.HotModuleReplacementPlugin(),
+    // 在输出阶段时, 遇到编译错误跳过
+    // https://www.webpackjs.com/plugins/no-emit-on-errors-plugin/
     new webpack.NoEmitOnErrorsPlugin(),
+    // 允许在编辑时配置的全局变量
+    // https://www.webpackjs.com/plugins/define-plugin/
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(true),
       'process.env': {
-        NODE_ENV: JSON.stringify(process.env.NODE_ENV),
+        NODE_ENV: JSON.stringify(process.env.NODE_ENV)
       }
     })
   ]

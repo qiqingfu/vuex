@@ -5,6 +5,9 @@ const webpackHotMiddleware = require('webpack-hot-middleware')
 const WebpackConfig = require('./webpack.config')
 
 const app = express()
+
+// Compiler 实例, 可以通过它手动触发 webpack 执行器, 或者是让它执行构建并监听变更
+// .run(callback)、.watch(watchOptions, handler)
 const compiler = webpack(WebpackConfig)
 
 app.use(webpackDevMiddleware(compiler, {
