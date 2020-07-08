@@ -55,6 +55,7 @@ describe('Helpers', () => {
       store,
       computed: mapState('foo', {
         a: (state, getters) => {
+          expect(store._makeLocalGettersCache['foo/'].b).toEqual(getters.b)
           return state.a + getters.b
         }
       })

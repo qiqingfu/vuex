@@ -148,6 +148,7 @@ describe('Store', () => {
           })
         },
         two: async ({ commit, dispatch }, n) => {
+          expect(dispatch).toEqual(store.dispatch)
           await dispatch(TEST, 1)
           expect(store.state.a).toBe(2)
           commit(TEST, n)
@@ -224,9 +225,11 @@ describe('Store', () => {
         }
       },
       actions: {
-        check ({ getters }, value) {
+        check ({ getters, rootGetters }, value) {
+          expect(getters).toEqual(rootGetters)
           // check for exposing getters into actions
           expect(getters.state).toBe(value)
+          expect(rootGetters.state).toBe(value)
         }
       }
     })

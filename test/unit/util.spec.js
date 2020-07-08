@@ -76,9 +76,11 @@ describe('util', () => {
 
   it('isPromise', () => {
     const promise = new Promise(() => {}, () => {})
+    const promiseResolve = Promise.resolve(1)
     expect(isPromise(1)).toBe(false)
     expect(isPromise(promise)).toBe(true)
     expect(isPromise(new Function())).toBe(false)
+    expect(isPromise(promiseResolve)).toBe(true)
   })
 
   it('assert', () => {
