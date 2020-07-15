@@ -41,7 +41,7 @@ export class Store {
     /**
      * 重写原型上的方法
      * 这样开发中使用时,commit 或 dispatch 是直接调用的, 所以 this指向 undefined(严格模式)或 window对象
-     * 为了让开发者直接调用, 并且 commit 和 dispatch 任然指向 store 这个实例对象
+     * 为了让开发者直接调用, 并且 commit 和 dispatch 仍然指向 store 这个实例对象
      * @type {Store}
      */
     const store = this
