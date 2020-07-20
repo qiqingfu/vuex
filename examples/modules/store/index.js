@@ -12,7 +12,12 @@ const moduleA = {
   }),
   mutations: { },
   actions: { },
-  getters: { }
+  getters: { },
+  modules: {
+    family: {
+      state: {}
+    }
+  }
 }
 
 const moduleB = {
