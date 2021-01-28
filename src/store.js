@@ -737,6 +737,8 @@ function makeLocalGetters (store, namespace) {
     Object.keys(store.getters).forEach(type => {
       // skip if the target getter is not match this namespace
       // 如果目标获取器与此空间名称不匹配, 则跳过
+      // ☆ 将同命名空间下的 getters 计算属性函数, 都通过 Object.defineProperty 定义到
+      // gettersProxy 对象上, 以供同命名空间下的 getters 相互调用
       if (type.slice(0, splitPos) !== namespace) return
 
       // extract local getter type
